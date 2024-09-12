@@ -50,20 +50,58 @@ body {
     gap: 10px; /* Add gap between slots for better spacing */
 }
 
-/* Responsive slot box styling with vertical layout for Chinese, pinyin, and English */
+/* Slot container for 3D flip effect */
 .slot {
     background-color: #f9f9f9;
     border: 2px solid #ddd;
     padding: 8px;
     border-radius: 10px;
-    width: 28vw; /* Set the width relative to the viewport */
-    height: 150px; /* Fixed height to give the "brick" feel */
+    width: 28vw;
+    height: 150px;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    overflow: hidden;
+    perspective: 1000px; /* Add perspective for 3D effect */
+    cursor: pointer;
+    position: relative;
+}
+
+/* The flipping card */
+.slot-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.8s;
+}
+
+/* Rotate the slot when flipped */
+.slot.flipped .slot-inner {
+    transform: rotateY(180deg);
+}
+
+/* Front side of the slot */
+.slot-front, .slot-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+/* Front side only shows the Chinese character */
+.slot-front {
+    background-color: #f9f9f9;
+}
+
+/* Back side shows Chinese, Pinyin, and translation */
+.slot-back {
+    background-color: #f9f9f9;
+    transform: rotateY(180deg);
 }
 
 /* Chinese character styling */
@@ -341,13 +379,29 @@ body {
         }
 
         function updateSlotContent(slot, wordObj) {
+            // Set the front and back content of the slot
             slot.innerHTML = `
-                <div class="chinese">${wordObj.chinese}</div>
-                <div class="pinyin">(${wordObj.pinyin})</div>
-                <div class="translation">${wordObj.translation}</div>
+                <div class="slot-inner">
+                    <div class="slot-front">
+                        <div class="chinese">${wordObj.chinese}</div>
+                    </div>
+                    <div class="slot-back">
+                        <div class="chinese">${wordObj.chinese}</div>
+                        <div class="pinyin">(${wordObj.pinyin})</div>
+                        <div class="translation">${wordObj.translation}</div>
+                    </div>
+                </div>
             `;
-            slot.dataset.chinese = wordObj.chinese;  // Store the Chinese character in dataset for matching logic
+            slot.dataset.chinese = wordObj.chinese; // Store the Chinese character in the dataset
         }
+
+        // Add flip functionality to each slot
+        slots.forEach(slot => {
+            slot.addEventListener('click', () => {
+                slot.classList.toggle('flipped'); // Toggle the 'flipped' class on click
+            });
+        });
+
 
         function spinSlot(slot, intervalTime) {
             return new Promise((resolve) => {
