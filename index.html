@@ -196,8 +196,8 @@ body {
 
 /* Word match color for single match */
 .slot.word-match-1 {
-    background-color: #90ee90; /* Light green for word matches */
-    border-color: #32cd32; /* Darker green border */
+    background-color: #e7e7e7; /* Light green for word matches */
+    border-color: #8b8b8b; /* Darker green border */
 }
 
 /* Word match color for two matches */
@@ -210,6 +210,12 @@ body {
 .slot.word-match-3 {
     background-color: #ff6347; /* Tomato red for three matches */
     border-color: #ff4500; /* Orange red border */
+}
+
+/* Color for both category and word match */
+.slot.category-word-match {
+    background-color: #ffa07a; /* Light salmon for both category and word match */
+    border-color: #ff4500; /* Dark orange red border */
 }
 
 /* Animation for slot match (shrink and grow) */
@@ -227,8 +233,9 @@ body {
 
 /* Apply animation to matched slots */
 .slot.match {
-    animation: match-animation 0.5s ease-out;
+    animation: match-animation 0.2s ease-out;
 }
+
 
 
     </style>
@@ -357,11 +364,11 @@ body {
         }
 
         function resetSlotStyles() {
+            // Remove all match-related classes before the next spin
             slots.forEach(slot => {
-                slot.classList.remove('category-match', 'word-match-1', 'word-match-2', 'word-match-3', 'match');
+                slot.classList.remove('category-match', 'word-match-1', 'word-match-2', 'word-match-3', 'category-word-match', 'match');
             });
         }
-
 
         async function spinSlots() {
             if (isSpinning) return;
@@ -464,15 +471,17 @@ body {
             slots.forEach(slot => {
                 const wordCategory = words.find(word => word.chinese === slot.dataset.chinese)?.category;
 
-                // Check if it matches the current category
-                if (wordCategory === currentCategory) {
-                    categoryMatches += 1;
-                    slot.classList.add('category-match', 'match'); // Add category match styling and animation
-                }
-
                 // Track word matches
                 const symbol = slot.dataset.chinese;
                 wordMatchCounts[symbol] = (wordMatchCounts[symbol] || 0) + 1;
+
+                // Check if it matches the current category and word match
+                if (wordCategory === currentCategory && wordMatchCounts[symbol] > 1) {
+                    slot.classList.add('category-word-match', 'match'); // Both category and word match
+                } else if (wordCategory === currentCategory) {
+                    slot.classList.add('category-match', 'match'); // Only category match
+                    categoryMatches += 1; // Count the number of category matches
+                }
             });
 
             // Apply word match colors and animations based on match counts
@@ -480,14 +489,14 @@ body {
                 const matchCount = wordMatchCounts[symbol];
                 const matchedSlots = slots.filter(slot => slot.dataset.chinese === symbol);
 
-                // Apply different classes based on the number of matches
+                // Only apply word match colors if it doesn't already have category-word-match
                 matchedSlots.forEach(slot => {
-                    if (matchCount === 1) {
-                        slot.classList.add('word-match-1', 'match');
-                    } else if (matchCount === 2) {
-                        slot.classList.add('word-match-2', 'match');
-                    } else if (matchCount >= 3) {
-                        slot.classList.add('word-match-3', 'match');
+                    if (!slot.classList.contains('category-word-match')) {
+                        if (matchCount === 2) {
+                            slot.classList.add('word-match-2', 'match');
+                        } else if (matchCount === 3) {
+                            slot.classList.add('word-match-3', 'match');
+                        }
                     }
                 });
             });
@@ -510,6 +519,7 @@ body {
 
             isSpinning = false;
         }
+
 
 
 
