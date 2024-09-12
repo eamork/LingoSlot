@@ -188,6 +188,48 @@ body {
     100% { transform: translateY(-100%); }
 }
 
+/* Category match color */
+.slot.category-match {
+    background-color: #add8e6; /* Light blue for category matches */
+    border-color: #6495ed; /* Darker blue border */
+}
+
+/* Word match color for single match */
+.slot.word-match-1 {
+    background-color: #90ee90; /* Light green for word matches */
+    border-color: #32cd32; /* Darker green border */
+}
+
+/* Word match color for two matches */
+.slot.word-match-2 {
+    background-color: #ffd700; /* Gold for two matches */
+    border-color: #ffa500; /* Orange border */
+}
+
+/* Word match color for three matches */
+.slot.word-match-3 {
+    background-color: #ff6347; /* Tomato red for three matches */
+    border-color: #ff4500; /* Orange red border */
+}
+
+/* Animation for slot match (shrink and grow) */
+@keyframes match-animation {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.9); /* Shrink slightly */
+    }
+    100% {
+        transform: scale(1); /* Back to normal */
+    }
+}
+
+/* Apply animation to matched slots */
+.slot.match {
+    animation: match-animation 0.5s ease-out;
+}
+
 
     </style>
 </head>
@@ -314,8 +356,17 @@ body {
             });
         }
 
+        function resetSlotStyles() {
+            slots.forEach(slot => {
+                slot.classList.remove('category-match', 'word-match-1', 'word-match-2', 'word-match-3', 'match');
+            });
+        }
+
+
         async function spinSlots() {
             if (isSpinning) return;
+
+            resetSlotStyles(); // Reset styles before the next spin
 
             const betAmount = parseInt(betInput.value);
             if (betAmount > balance) {
@@ -406,13 +457,39 @@ body {
                 }
             }
 
-            // **New Code for Category Matching:**
+            // **New Code for Category and Word Matching with Colors and Animations:**
             let categoryMatches = 0;
+            let wordMatchCounts = {}; // To keep track of how many times a word appears
+
             slots.forEach(slot => {
                 const wordCategory = words.find(word => word.chinese === slot.dataset.chinese)?.category;
+
+                // Check if it matches the current category
                 if (wordCategory === currentCategory) {
-                    categoryMatches += 1;  // Count how many slots match the current category
+                    categoryMatches += 1;
+                    slot.classList.add('category-match', 'match'); // Add category match styling and animation
                 }
+
+                // Track word matches
+                const symbol = slot.dataset.chinese;
+                wordMatchCounts[symbol] = (wordMatchCounts[symbol] || 0) + 1;
+            });
+
+            // Apply word match colors and animations based on match counts
+            Object.keys(wordMatchCounts).forEach(symbol => {
+                const matchCount = wordMatchCounts[symbol];
+                const matchedSlots = slots.filter(slot => slot.dataset.chinese === symbol);
+
+                // Apply different classes based on the number of matches
+                matchedSlots.forEach(slot => {
+                    if (matchCount === 1) {
+                        slot.classList.add('word-match-1', 'match');
+                    } else if (matchCount === 2) {
+                        slot.classList.add('word-match-2', 'match');
+                    } else if (matchCount >= 3) {
+                        slot.classList.add('word-match-3', 'match');
+                    }
+                });
             });
 
             // Assign bonus winnings for category matches
@@ -433,6 +510,7 @@ body {
 
             isSpinning = false;
         }
+
 
 
         function createWeightedPool(rowSymbols, weight) {
