@@ -104,6 +104,11 @@ body {
     margin-top: 15px;
 }
 
+#hsk-level-selector {
+    margin: 10px 0;
+    font-size: 1rem;
+    }
+
 /* Add media queries for small screens (e.g., mobile phones) */
 @media only screen and (max-width: 768px) {
     .slot-machine {
@@ -183,10 +188,22 @@ body {
     </style>
 </head>
 <body>
-
-
     <div class="slot-machine">
-        <h1>Chinese HSK 2 Slot Game</h1>
+        <h1>Chinese HSK Slot Game</h1>
+
+        <!-- Dropdown to select HSK Level -->
+        <div id="hsk-level-selector">
+            <label for="hskLevel">Select HSK Level: </label>
+            <select id="hskLevel">
+                <option value="1">HSK 1</option>
+                <option value="2" selected>HSK 2</option>
+                <option value="3">HSK 3</option>
+                <option value="4">HSK 4</option>
+                <option value="5">HSK 5</option>
+                <option value="6">HSK 6</option>
+            </select>
+        </div>
+
         <div class="category-box" id="category-box">Category: ?</div>
 
         <!-- Input for bet amount -->
@@ -221,33 +238,12 @@ body {
         <div id="balance">Balance: $100</div> <!-- Display player balance -->
     </div>
 
+    <!-- External JS file for HSK words -->
+    <script src="hskWords.js"></script>
+
     <script>
-        // Updated words array with categories
-        const words = [
-            { chinese: "爱", pinyin: "ài", translation: "love", category: "emotion" },
-            { chinese: "八", pinyin: "bā", translation: "eight", category: "number" },
-            { chinese: "爸爸", pinyin: "bàba", translation: "father", category: "family" },
-            { chinese: "吧", pinyin: "ba", translation: "particle", category: "grammar" },
-            { chinese: "白", pinyin: "bái", translation: "white", category: "color" },
-            { chinese: "百", pinyin: "bǎi", translation: "hundred", category: "number" },
-            { chinese: "帮助", pinyin: "bāngzhù", translation: "help", category: "action" },
-            { chinese: "报纸", pinyin: "bàozhǐ", translation: "newspaper", category: "object" },
-            { chinese: "杯子", pinyin: "bēizi", translation: "cup", category: "object" },
-            { chinese: "北京", pinyin: "Běijīng", translation: "Beijing", category: "place" },
-            { chinese: "比", pinyin: "bǐ", translation: "compare", category: "action" },
-            { chinese: "别", pinyin: "bié", translation: "don't", category: "grammar" },
-            { chinese: "长", pinyin: "cháng", translation: "long", category: "description" },
-            { chinese: "唱歌", pinyin: "chànggē", translation: "sing", category: "action" },
-            { chinese: "出", pinyin: "chū", translation: "exit", category: "action" },
-            { chinese: "穿", pinyin: "chuān", translation: "wear", category: "action" },
-            { chinese: "次", pinyin: "cì", translation: "time", category: "time" },
-            { chinese: "从", pinyin: "cóng", translation: "from", category: "grammar" },
-            { chinese: "错", pinyin: "cuò", translation: "wrong", category: "description" }
-        ];
-    
-        const categories = ["emotion", "number", "family", "grammar", "color", "action", "object", "place", "description", "time"];
-    
-        // Get all slot elements (now including slots 4-9)
+        // Use words from the external hskWords.js file
+        const hskLevelSelector = document.getElementById('hskLevel');
         const slots = [
             document.getElementById('slot1'),
             document.getElementById('slot2'),
@@ -259,112 +255,212 @@ body {
             document.getElementById('slot8'),
             document.getElementById('slot9')
         ];
-    
+
         const message = document.getElementById('message');
         const categoryBox = document.getElementById('category-box');
         const spinButton = document.getElementById('spin-button');
         const betInput = document.getElementById('bet');
         const balanceDisplay = document.getElementById('balance');
-    
+
         let currentCategory = '';
-        let isSpinning = false; // Prevent multiple clicks during spin
-        let balance = 100; // Starting balance
-    
-        // Function to update the balance display
+        let isSpinning = false;
+        let balance = 100;
+        let currentLevel = 2; // Default to HSK 2
+        let words = hskWords[currentLevel]; // Start with HSK 2 words
+
+        // Update words when level changes
+        hskLevelSelector.addEventListener('change', function () {
+            currentLevel = parseInt(this.value);
+            words = hskWords[currentLevel]; // Update words based on selected level
+            categoryBox.textContent = `Category: ?`; // Reset the category box
+        });
+
         function updateBalanceDisplay() {
             balanceDisplay.textContent = `Balance: $${balance}`;
         }
-    
-        // Function to get a random word from the array
+
         function getRandomWord() {
             return words[Math.floor(Math.random() * words.length)];
         }
-    
-        // Function to get a random category
+
         function getRandomCategory() {
-            return categories[Math.floor(Math.random() * categories.length)];
+            return words[Math.floor(Math.random() * words.length)].category;
         }
-    
+
         function updateSlotContent(slot, wordObj) {
             slot.innerHTML = `
                 <div class="chinese">${wordObj.chinese}</div>
                 <div class="pinyin">(${wordObj.pinyin})</div>
                 <div class="translation">${wordObj.translation}</div>
             `;
+            slot.dataset.chinese = wordObj.chinese;  // Store the Chinese character in dataset for matching logic
         }
-    
-        // Function to rapidly change slot words (simulate fast spinning)
+
         function spinSlot(slot, intervalTime) {
             return new Promise((resolve) => {
                 let spinInterval = setInterval(() => {
                     const randomWord = getRandomWord();
-                    updateSlotContent(slot, randomWord); // Use the updateSlotContent function
-                    slot.dataset.category = randomWord.category; // Save the category for comparison
+                    updateSlotContent(slot, randomWord);
                 }, intervalTime);
-    
-                // Stop the spinning after 2 seconds
+
                 setTimeout(() => {
                     clearInterval(spinInterval);
                     resolve();
                 }, 2000);
             });
         }
-    
-        // Function to spin all slots
+
         async function spinSlots() {
-            if (isSpinning) return; // Prevent multiple clicks during spin
-    
+            if (isSpinning) return;
+
             const betAmount = parseInt(betInput.value);
             if (betAmount > balance) {
                 message.textContent = 'You don\'t have enough money to make that bet!';
                 return;
             }
-    
+
             isSpinning = true;
-            message.textContent = ''; // Clear message
-    
-            // Deduct the bet from the balance
+            message.textContent = '';
             balance -= betAmount;
             updateBalanceDisplay();
-    
-            // Pick a random category for this round
-            currentCategory = getRandomCategory();
+
+            currentCategory = getRandomCategory();  // Select a random category for this round
             categoryBox.textContent = `Category: ${currentCategory}`;
-    
-            // Spin each slot with slightly different speeds for better effect
-            const spinPromises = slots.map((slot, index) => {
-                return spinSlot(slot, 100 + index * 20); // Increase interval time slightly for each slot
-            });
-    
-            await Promise.all(spinPromises); // Wait for all slots to finish spinning
-    
-            // Check if any of the slots match the category
-            let winnings = 0;
-    
+
+            // Spin Row 1 (slots 1, 2, 3)
+            await Promise.all([
+                spinSlot(slots[0], 100),
+                spinSlot(slots[1], 120),
+                spinSlot(slots[2], 140)
+            ]);
+
+            // Use words from Row 1 to influence Row 2 and Row 3
+            const row1Symbols = slots.slice(0, 3).map(slot => slot.dataset.chinese);
+
+            // Create a weighted pool for Row 2 and Row 3
+            const weightedWordPoolRow2 = createWeightedPool(row1Symbols, 3); // More weight for Row 2
+            const weightedWordPoolRow3 = createWeightedPool(row1Symbols, 2); // Slightly less weight for Row 3
+
+            // Spin Row 2 with increased likelihood for Row 1 symbols
+            await Promise.all([
+                spinSlotWithWeightedPool(slots[3], 100, weightedWordPoolRow2),
+                spinSlotWithWeightedPool(slots[4], 120, weightedWordPoolRow2),
+                spinSlotWithWeightedPool(slots[5], 140, weightedWordPoolRow2)
+            ]);
+
+            // Spin Row 3 with increased likelihood for both Row 1 and Row 2 symbols
+            await Promise.all([
+                spinSlotWithWeightedPool(slots[6], 100, weightedWordPoolRow3),
+                spinSlotWithWeightedPool(slots[7], 120, weightedWordPoolRow3),
+                spinSlotWithWeightedPool(slots[8], 140, weightedWordPoolRow3)
+            ]);
+
+            // Check how many matching symbols we have
+            let symbolCount = {};  // To track how many times each symbol appears
             slots.forEach(slot => {
-                if (slot.dataset.category === currentCategory) {
-                    winnings += betAmount * 0.5; // Reward if slot matches category
+                const symbol = slot.dataset.chinese;
+                symbolCount[symbol] = (symbolCount[symbol] || 0) + 1;
+            });
+
+            // Calculate winnings based on symbol matches
+            let winnings = 0;
+            let maxMatches = 0;  // Track the maximum number of symbol matches
+
+            Object.values(symbolCount).forEach(count => {
+                if (count > 1) {
+                    maxMatches = Math.max(maxMatches, count);  // Get the highest number of matches
                 }
             });
-    
+
+            // Assign winnings based on the number of matching symbols
+            if (maxMatches >= 2) {
+                switch (maxMatches) {
+                    case 2:
+                        winnings = betAmount * 1;   // 2 matches
+                        break;
+                    case 3:
+                        winnings = betAmount * 2;   // 3 matches
+                        break;
+                    case 4:
+                        winnings = betAmount * 3;   // 4 matches
+                        break;
+                    case 5:
+                        winnings = betAmount * 5;   // 5 matches
+                        break;
+                    case 6:
+                        winnings = betAmount * 8;   // 6 matches
+                        break;
+                    case 7:
+                        winnings = betAmount * 12;  // 7 matches
+                        break;
+                    case 8:
+                        winnings = betAmount * 20;  // 8 matches
+                        break;
+                    case 9:
+                        winnings = betAmount * 30;  // All 9 matches
+                        break;
+                }
+            }
+
+            // **New Code for Category Matching:**
+            let categoryMatches = 0;
+            slots.forEach(slot => {
+                const wordCategory = words.find(word => word.chinese === slot.dataset.chinese)?.category;
+                if (wordCategory === currentCategory) {
+                    categoryMatches += 1;  // Count how many slots match the current category
+                }
+            });
+
+            // Assign bonus winnings for category matches
+            if (categoryMatches > 0) {
+                winnings += categoryMatches * (betAmount * 0.5);  // Adjust multiplier as needed
+            }
+
             // Update balance with winnings
             balance += winnings;
             updateBalanceDisplay();
-    
+
             // Display winnings or loss
             if (winnings > 0) {
-                message.textContent = `You won $${winnings.toFixed(2)}!`;
+                message.textContent = `You won $${winnings.toFixed(2)} with ${maxMatches} matching symbols and ${categoryMatches} category matches!`;
             } else {
                 message.textContent = 'No matches this time. Try again!';
             }
-    
-            isSpinning = false; // Reset spinning state
+
+            isSpinning = false;
         }
-    
-        // Add event listener to spin button
+
+
+        function createWeightedPool(rowSymbols, weight) {
+            const weightedPool = [...words]; // Start with all words in the pool
+            rowSymbols.forEach(symbol => {
+                // Add the symbol multiple times to the pool to increase its likelihood
+                for (let i = 0; i < weight; i++) {
+                    const wordObj = words.find(word => word.chinese === symbol);
+                    if (wordObj) {
+                        weightedPool.push(wordObj);
+                    }
+                }
+            });
+            return weightedPool;
+        }
+
+        function spinSlotWithWeightedPool(slot, intervalTime, wordPool) {
+            return new Promise((resolve) => {
+                let spinInterval = setInterval(() => {
+                    const randomWord = wordPool[Math.floor(Math.random() * wordPool.length)];
+                    updateSlotContent(slot, randomWord);
+                }, intervalTime);
+
+                setTimeout(() => {
+                    clearInterval(spinInterval);
+                    resolve();
+                }, 2000);
+            });
+        }
+
         spinButton.addEventListener('click', spinSlots);
     </script>
-    
 
 </body>
 </html>
