@@ -214,8 +214,8 @@ body {
 
 /* Color for both category and word match */
 .slot.category-word-match {
-    background-color: #ffa07a; /* Light salmon for both category and word match */
-    border-color: #ff4500; /* Dark orange red border */
+    background-color: #aa6fee; /* Light salmon for both category and word match */
+    border-color: #691de2; /* Dark orange red border */
 }
 
 /* Animation for slot match (shrink and grow) */
@@ -359,7 +359,7 @@ body {
                 setTimeout(() => {
                     clearInterval(spinInterval);
                     resolve();
-                }, 2000);
+                }, 800);
             });
         }
 
@@ -400,8 +400,8 @@ body {
             const row1Symbols = slots.slice(0, 3).map(slot => slot.dataset.chinese);
 
             // Create a weighted pool for Row 2 and Row 3
-            const weightedWordPoolRow2 = createWeightedPool(row1Symbols, 3); // More weight for Row 2
-            const weightedWordPoolRow3 = createWeightedPool(row1Symbols, 2); // Slightly less weight for Row 3
+            const weightedWordPoolRow2 = createWeightedPool(row1Symbols, 5); // More weight for Row 2
+            const weightedWordPoolRow3 = createWeightedPool(row1Symbols, 4); // Slightly less weight for Row 3
 
             // Spin Row 2 with increased likelihood for Row 1 symbols
             await Promise.all([
@@ -547,7 +547,7 @@ body {
                 setTimeout(() => {
                     clearInterval(spinInterval);
                     resolve();
-                }, 2000);
+                }, 800);
             });
         }
 
